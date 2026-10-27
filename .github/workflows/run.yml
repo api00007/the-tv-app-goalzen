@@ -1,0 +1,35 @@
+name: Goozapp Auto Scraper
+
+on:
+  schedule:
+    - cron: '*/20 * * * *'
+  workflow_dispatch:
+  repository_dispatch:
+    types: [trigger-scraper]
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: Run Scraper
+        env:
+          BASE_URL: ${{ secrets.BASE_URL }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
+          TGITHUB_USER: ${{ secrets.TGITHUB_USER }}
+          TGITHUB_REPO: ${{ secrets.TGITHUB_REPO }}
+          TGITHUB_EMAIL: ${{ secrets.TGITHUB_EMAIL }}
+        run: |
+          python scraper.py
