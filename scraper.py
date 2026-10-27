@@ -13,7 +13,7 @@ import cloudscraper
 
 BASE_URL = os.getenv("BASE_URL")
 DEFAULT_STREAM_DOMAIN = "chatgpt.hereisman.net"
-OUTPUT_FILE = "Goozapp.json"
+OUTPUT_FILE = "tta.json"
 FIXED_TEAM_LOGO = "https://i.ibb.co/1Yh8PdLH/1000459066.png"
 
 SPORT_CATEGORY_MAP = {
