@@ -264,7 +264,14 @@ def run_scraper():
 
         full_m_url = m_url if m_url.startswith("http") else urljoin(clean_base, m_url)
         match_id_search = re.search(r'/(\d+)/?$', full_m_url)
-        match_id = match_id_search.group(1) if match_id_search else ""
+        if match_id_search:
+            match_id = match_id_search.group(1)
+        else:
+            all_digits = re.findall(r'\d{5,}', full_m_url)
+            if all_digits:
+                match_id = all_digits[-1]
+            else:
+                match_id = str(abs(hash(full_m_url)) % 9000000000 + 1000000000)
         
         raw_matches.append({
             "category": category_name,
@@ -351,41 +358,39 @@ def run_scraper():
     
     for item in raw_matches:
         ids_to_use = item["extracted_ids"]
-        
-        if not ids_to_use and item["backup_id"]:
+        if not ids_to_use:
             ids_to_use = [item["backup_id"]]
             
-        if ids_to_use:
-            time_data = parse_event_time(item["raw_time_str"], item["category"], item["league_name"])
-            league_logo_url = get_league_logo(item["league_name"])
+        time_data = parse_event_time(item["raw_time_str"], item["category"], item["league_name"])
+        league_logo_url = get_league_logo(item["league_name"])
 
-            for index, stream_id in enumerate(ids_to_use, 1):
-                raw_m3u8 = f"https://{active_stream_domain}/playlist/{stream_id}/load-playlist.m3u8|Referer=https://gooz.aapmains.net"
-                
-                if index == 1:
-                    stream_name = f"{item['league_name'].upper()} SERVER"
-                else:
-                    stream_name = "HD SERVER" if index == 2 else f"HD SERVER {index - 1}"
+        for index, stream_id in enumerate(ids_to_use, 1):
+            raw_m3u8 = f"https://{active_stream_domain}/playlist/{stream_id}/load-playlist.m3u8|Referer=https://gooz.aapmains.net"
+            
+            if index == 1:
+                stream_name = f"{item['league_name'].upper()} SERVER"
+            else:
+                stream_name = "HD SERVER" if index == 2 else f"HD SERVER {index - 1}"
 
-                formatted_iframe = f'<iframe src="https://ivan-player.vercel.app/?play=https://stream-proxy.goalzen.site/proxy/php?url={raw_m3u8}" style="width: 100%; aspect-ratio: 16/9; border: none;" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>'
+            formatted_iframe = f'<iframe src="https://ivan-player.vercel.app/?play=https://stream-proxy.goalzen.site/proxy/php?url={raw_m3u8}" style="width: 100%; aspect-ratio: 16/9; border: none;" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" allowfullscreen></iframe>'
 
-                all_live_matches.append(OrderedDict([
-                    ("Id", str(len(all_live_matches) + 1)),
-                    ("Category", item["category"]),
-                    ("Event_Name", item["clean_rivals"]),
-                    ("League_Name", item["league_name"]),
-                    ("League_Logo", league_logo_url),
-                    ("Stream_Name", stream_name),
-                    ("Team_A", item["team_a"]),
-                    ("Team_A_Logo", FIXED_TEAM_LOGO),
-                    ("Team_B", item["team_b"]),
-                    ("Team_B_Logo", FIXED_TEAM_LOGO),
-                    ("Start_Time", time_data["Start_Time"]),
-                    ("End_Time", time_data["End_Time"]),
-                    ("UTC_Start", time_data["UTC_Start"]),
-                    ("UTC_End", time_data["UTC_End"]),
-                    ("Link", formatted_iframe)
-                ]))
+            all_live_matches.append(OrderedDict([
+                ("Id", str(len(all_live_matches) + 1)),
+                ("Category", item["category"]),
+                ("Event_Name", item["clean_rivals"]),
+                ("League_Name", item["league_name"]),
+                ("League_Logo", league_logo_url),
+                ("Stream_Name", stream_name),
+                ("Team_A", item["team_a"]),
+                ("Team_A_Logo", FIXED_TEAM_LOGO),
+                ("Team_B", item["team_b"]),
+                ("Team_B_Logo", FIXED_TEAM_LOGO),
+                ("Start_Time", time_data["Start_Time"]),
+                ("End_Time", time_data["End_Time"]),
+                ("UTC_Start", time_data["UTC_Start"]),
+                ("UTC_End", time_data["UTC_End"]),
+                ("Link", formatted_iframe)
+            ]))
 
     final_package = OrderedDict([
         ("Owner", "Ivan-FluX"),
